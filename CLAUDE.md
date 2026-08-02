@@ -42,6 +42,8 @@ prisma/
 
 `Conversation`(clientId, title, timestamps) と `Message`(conversationId, role, content, timestamps)。MongoDBコネクタのため `id` は `@id @default(auto()) @map("_id") @db.ObjectId`、外部キー(`conversationId`)にも `@db.ObjectId` を付与する。詳細は `SPEC.md` の該当セクション、実装後は `prisma/schema.prisma` を正とする。
 
+導入したPrismaは7系のため、接続先 `DATABASE_URL` は `schema.prisma` の `datasource` ブロックではなく `prisma.config.ts` 側で読み込む。Prisma Clientの生成物は `app/generated/prisma` に出力されるため、コード側では `@prisma/client` ではなくこの生成パスからimportする(`.gitignore` に登録済みの生成物なのでコミットしない)。
+
 会話データは**セッション中のみ**保持する。`Conversation.updatedAt` を基準にしたTTLインデックス(既定24時間)で自動失効させる。TTLインデックスはPrisma schemaでは表現できないため、Prisma管理外でMongoDB側に直接作成する(`db.Conversation.createIndex({ updatedAt: 1 }, { expireAfterSeconds: ... })`)。
 
 ## API(Hono, `/api` 配下)

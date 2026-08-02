@@ -18,12 +18,12 @@
 
 ## Phase 2: データベースセットアップ(MongoDB)
 
-- [ ] `npx prisma init --datasource-provider mongodb` でPrismaを初期化
-- [ ] `prisma/schema.prisma` に `Conversation` / `Message` モデルを実装(`SPEC.md` 5章の定義を反映、`@db.ObjectId` を忘れずに付与)
-- [ ] MongoDB Atlasのクラスタを用意し、接続文字列を `.env` の `DATABASE_URL` に設定
-- [ ] `npx prisma db push` でスキーマをMongoDBに反映(`migrate`系は非対応のため使わない)
-- [ ] `npx prisma generate` でPrisma Clientを生成
-- [ ] MongoDB側でTTLインデックスを作成(`Conversation.updatedAt` 基準、既定24時間で失効)
+- [x] `npx prisma init --datasource-provider mongodb` でPrismaを初期化(Prisma 7系。接続URLは `prisma.config.ts` で管理)
+- [x] `prisma/schema.prisma` に `Conversation` / `Message` モデルを実装(`SPEC.md` 5章の定義を反映、`@db.ObjectId` を忘れずに付与)
+- [ ] MongoDB Atlasのクラスタを用意し、接続文字列を `.env` の `DATABASE_URL` に設定(ユーザー側の作業待ち)
+- [ ] `npx prisma db push` でスキーマをMongoDBに反映(`migrate`系は非対応のため使わない)(接続文字列待ち)
+- [x] `npx prisma generate` でPrisma Clientを生成(`app/generated/prisma` に出力)
+- [ ] MongoDB側でTTLインデックスを作成(`Conversation.updatedAt` 基準、既定24時間で失効)(接続文字列待ち)
 
 ## Phase 3: バックエンドAPI実装(Hono + Mastra)
 
