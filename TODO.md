@@ -18,8 +18,9 @@
 
 ## Phase 2: データベースセットアップ(MongoDB)
 
-- [x] `npx prisma init --datasource-provider mongodb` でPrismaを初期化(Prisma 7系。接続URLは `prisma.config.ts` で管理)
+- [x] `npx prisma init --datasource-provider mongodb` でPrismaを初期化
 - [x] `prisma/schema.prisma` に `Conversation` / `Message` モデルを実装(`SPEC.md` 5章の定義を反映、`@db.ObjectId` を忘れずに付与)
+- [x] **(想定外対応)** Prisma ORM v7にはMongoDBコネクタが存在しないと判明したため、v6.19系にダウングレード(`prisma.config.ts`廃止、`generator` を `prisma-client-js` に戻す)。詳細は `SPEC.md` 5章・`CLAUDE.md` の注記を参照
 - [ ] MongoDB Atlasのクラスタを用意し、接続文字列を `.env` の `DATABASE_URL` に設定(ユーザー側の作業待ち)
 - [ ] `npx prisma db push` でスキーマをMongoDBに反映(`migrate`系は非対応のため使わない)(接続文字列待ち)
 - [x] `npx prisma generate` でPrisma Clientを生成(`app/generated/prisma` に出力)

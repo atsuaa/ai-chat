@@ -49,11 +49,16 @@ Anthropic Claude APIを利用したAIチャットボットのWebアプリケー�
 
 ## 5. データモデル(Prisma想定、MongoDBコネクタ)
 
-> **注記(Prisma 7):** 使用しているPrisma 7では接続先URLは `schema.prisma` の `datasource` ブロックではなく `prisma.config.ts`(`datasource.url: process.env["DATABASE_URL"]`)側で管理する。`generator` も新方式の `provider = "prisma-client"` を使用し、生成物は `app/generated/prisma` に出力される(`@prisma/client` からのimportではなく、この生成パスからimportする)。
+> **注記(Prismaバージョン):** Prisma ORM v7はMongoDBコネクタを含まないため(2026年時点)、本プロジェクトは **Prisma ORM v6系(6.19系)に固定**して使用する。CLIが表示する「v7へアップグレード」の案内には従わないこと。generatorは旧方式の `prisma-client-js` を使用し、生成物は `node_modules/@prisma/client` に出力される(通常通り `@prisma/client` からimportする)。
 
 ```prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "mongodb"
+  url      = env("DATABASE_URL")
 }
 
 model Conversation {
