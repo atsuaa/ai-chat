@@ -21,10 +21,10 @@
 - [x] `npx prisma init --datasource-provider mongodb` でPrismaを初期化
 - [x] `prisma/schema.prisma` に `Conversation` / `Message` モデルを実装(`SPEC.md` 5章の定義を反映、`@db.ObjectId` を忘れずに付与)
 - [x] **(想定外対応)** Prisma ORM v7にはMongoDBコネクタが存在しないと判明したため、v6.19系にダウングレード(`prisma.config.ts`廃止、`generator` を `prisma-client-js` に戻す)。詳細は `SPEC.md` 5章・`CLAUDE.md` の注記を参照
-- [ ] MongoDB Atlasのクラスタを用意し、接続文字列を `.env` の `DATABASE_URL` に設定(ユーザー側の作業待ち)
-- [ ] `npx prisma db push` でスキーマをMongoDBに反映(`migrate`系は非対応のため使わない)(接続文字列待ち)
-- [x] `npx prisma generate` でPrisma Clientを生成(`app/generated/prisma` に出力)
-- [ ] MongoDB側でTTLインデックスを作成(`Conversation.updatedAt` 基準、既定24時間で失効)(接続文字列待ち)
+- [x] MongoDB Atlasのクラスタを用意し、接続文字列を `.env` の `DATABASE_URL` に設定
+- [x] `npx prisma db push` でスキーマをMongoDBに反映(`migrate`系は非対応のため使わない)
+- [x] `npx prisma generate` でPrisma Clientを生成(`node_modules/@prisma/client` に出力、v6のため)
+- [x] MongoDB側でTTLインデックスを作成(`Conversation.updatedAt` 基準、24時間で失効。`scripts/create-ttl-index.ts` として実装・実行し、`listIndexes` で反映を確認済み)
 
 ## Phase 3: バックエンドAPI実装(Hono + Mastra)
 
