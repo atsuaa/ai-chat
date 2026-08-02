@@ -10,11 +10,11 @@
 
 ## Phase 1: 依存パッケージ導入
 
-- [ ] Hono関連: `hono`
-- [ ] Prisma関連: `prisma`, `@prisma/client`
-- [ ] Mastra: `npx mastra init` を実行(Mastra Observabilityは今回は不要のためスキップ可)
-- [ ] Anthropic連携用パッケージ(Mastraの `anthropic/*` モデル指定に必要な依存を導入)
-- [ ] `next.config.ts` に `serverExternalPackages: ["@mastra/*"]` を追加(Mastraパッケージをサーバーバンドル対象外にする)
+- [x] Hono関連: `hono`
+- [x] Prisma関連: `prisma`, `@prisma/client`
+- [x] Mastra: `npx mastra init` を実行(Mastra Observabilityは今回は不要のためスキップ可)
+- [x] Anthropic連携用パッケージ(Mastraのモデルルーター文字列 `anthropic/*` は `@mastra/core` 内蔵のルーティングで解決されるため、`@ai-sdk/anthropic` 等の追加インストールは不要と判断)
+- [x] `next.config.ts` に `serverExternalPackages: ["@mastra/*"]` を追加(Mastraパッケージをサーバーバンドル対象外にする)
 
 ## Phase 2: データベースセットアップ(MongoDB)
 

@@ -9,9 +9,15 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@mastra/core": "^1.55.0",
+    "@prisma/client": "^7.9.1",
+    "hono": "^4.12.33",
+    "mastra": "^1.21.0",
     "next": "16.2.12",
+    "prisma": "^7.9.1",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
