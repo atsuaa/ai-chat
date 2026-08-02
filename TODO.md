@@ -4,9 +4,9 @@
 
 ## Phase 0: プロジェクト初期化
 
-- [ ] `create-next-app` でNext.js(App Router, TypeScript)プロジェクトを作成
-- [ ] Git初期化・初回コミット
-- [ ] ディレクトリ構成を作成(`server/hono/`, `server/mastra/`, `prisma/`)
+- [x] `create-next-app` でNext.js(App Router, TypeScript)プロジェクトを作成
+- [x] Git初期化・初回コミット
+- [x] ディレクトリ構成を作成(`server/hono/`, `server/mastra/`, `prisma/`)
 
 ## Phase 1: 依存パッケージ導入
 
