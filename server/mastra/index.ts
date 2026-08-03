@@ -1,5 +1,6 @@
+import { Mastra } from "@mastra/core/mastra";
+import { chatAgent } from "./agent";
 
-import { Mastra } from '@mastra/core/mastra';
-
-export const mastra = new Mastra()
-        
+export const mastra = new Mastra({
+  agents: { chatAgent },
+});

@@ -28,14 +28,14 @@
 
 ## Phase 3: バックエンドAPI実装(Hono + Mastra)
 
-- [ ] `app/api/[[...route]]/route.ts` にHonoアプリをマウント(`hono/vercel` の `handle()` を使用)
-- [ ] クライアントID発行・保持ロジックを実装(初回アクセス時にUUIDを発行しCookieにセット)
-- [ ] `server/mastra/` にAnthropic Claudeを使うMastra `Agent` を定義
-- [ ] `GET /api/conversations` — クライアントIDに紐づく会話一覧取得を実装
-- [ ] `POST /api/conversations` — 新規会話作成を実装
-- [ ] `GET /api/conversations/:id/messages` — メッセージ一覧取得を実装
-- [ ] `POST /api/conversations/:id/messages` — メッセージ保存 + `agent.stream()` によるSSEストリーミング応答を実装
-- [ ] 各エンドポイントでPrisma経由のDB読み書きを実装
+- [x] `app/api/[[...route]]/route.ts` にHonoアプリをマウント(`hono/vercel` の `handle()` を使用)
+- [x] クライアントID発行・保持ロジックを実装(初回アクセス時にUUIDを発行しCookieにセット)
+- [x] `server/mastra/` にAnthropic Claudeを使うMastra `Agent` を定義
+- [x] `GET /api/conversations` — クライアントIDに紐づく会話一覧取得を実装
+- [x] `POST /api/conversations` — 新規会話作成を実装
+- [x] `GET /api/conversations/:id/messages` — メッセージ一覧取得を実装
+- [x] `POST /api/conversations/:id/messages` — メッセージ保存 + `agent.stream()` によるSSEストリーミング応答を実装
+- [x] 各エンドポイントでPrisma経由のDB読み書きを実装
 
 ## Phase 4: フロントエンド実装
 

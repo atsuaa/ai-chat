@@ -53,6 +53,13 @@ prisma/
 - `GET /api/conversations/:id/messages` — メッセージ一覧取得
 - `POST /api/conversations/:id/messages` — メッセージ送信、Claude応答をSSEでストリーミング返却
 
+### 実装メモ(Phase 3)
+
+- クライアントIDは `server/hono/client-id.ts` のミドルウェアで発行・検証する。Cookie名は `client_id`(初回アクセス時に `crypto.randomUUID()` で発行、`httpOnly`, `sameSite=Lax`, 有効期限1年)。全ルートで `c.get("clientId")` として参照可能。
+- `:id` のメッセージ系エンドポイントは、対象 `Conversation.clientId` がリクエストのクライアントIDと一致しない場合 `404` を返す(他クライアントの会話へのアクセスを防止)。
+- `POST /api/conversations/:id/messages` のSSEは `hono/streaming` の `streamSSE()` を使用し、`event: "message"` で `data: JSON.stringify({ text: chunk })` を逐次送信、完了時に `event: "done"`、エラー時に `event: "error"` を送信する契約とする。フロント実装時はこのイベント名・データ形式に合わせること。
+- 会話タイトルは未設定時、最初のユーザーメッセージ冒頭30文字を自動設定する(`server/hono/app.ts`)。
+
 ## 環境変数
 
 - `ANTHROPIC_API_KEY` — Claude APIキー
