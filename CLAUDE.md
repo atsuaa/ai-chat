@@ -59,6 +59,14 @@ prisma/
 - `:id` のメッセージ系エンドポイントは、対象 `Conversation.clientId` がリクエストのクライアントIDと一致しない場合 `404` を返す(他クライアントの会話へのアクセスを防止)。
 - `POST /api/conversations/:id/messages` のSSEは `hono/streaming` の `streamSSE()` を使用し、`event: "message"` で `data: JSON.stringify({ text: chunk })` を逐次送信、完了時に `event: "done"`、エラー時に `event: "error"` を送信する契約とする。フロント実装時はこのイベント名・データ形式に合わせること。
 - 会話タイトルは未設定時、最初のユーザーメッセージ冒頭30文字を自動設定する(`server/hono/app.ts`)。
+- Mastraはモデル呼び出し失敗(APIキー不正・クレジット不足など)を例外にせず、内部でログするだけで空のストリームを返すことがある。そのため `agentStream.textStream` を読み切った時点で応答が空文字列だった場合も `event: "error"` を送信する(`server/hono/app.ts`)。この場合ユーザーメッセージ自体は保存済みのまま、アシスタントメッセージは保存しない。
+
+## フロントエンド実装メモ(Phase 4)
+
+- `app/components/ChatApp.tsx` がクライアント側の状態(会話一覧・選択中の会話・メッセージ・送信中フラグ)を集約するトップレベルのクライアントコンポーネント。`Sidebar` / `MessageList` / `MessageInput` を組み合わせる。
+- `app/lib/api.ts` の `sendMessageStream()` はPOSTボディを送る必要があるため `EventSource` は使わず、`fetch` + `ReadableStream` で上記SSE契約(`event:` / `data:` 行)を自前パースしている。
+- Markdownレンダリングは `react-markdown` + `remark-gfm`(`app/components/MessageList.tsx`)。コードブロックの見た目は `@tailwindcss/typography`(`prose`クラス、`app/globals.css` に `@plugin "@tailwindcss/typography";` を追加)に依存する。シンタックスハイライトは導入していない。
+- 送信中(ストリーミング中)は会話の切り替え・新規作成を抑止する(`isSending` ガード)。エラーメッセージは会話切り替え時にクリアする。
 
 ## 環境変数
 

@@ -117,6 +117,16 @@ app.post("/conversations/:id/messages", async (c) => {
         });
       }
 
+      // Mastraはモデル呼び出しの失敗(APIキー不正・クレジット不足など)を例外にせず、
+      // 内部でログした上で空のストリームを返すことがあるため、空応答もエラー扱いにする
+      if (!assistantContent) {
+        await stream.writeSSE({
+          event: "error",
+          data: JSON.stringify({ message: "応答の生成に失敗しました" }),
+        });
+        return;
+      }
+
       await prisma.message.create({
         data: {
           conversationId,
