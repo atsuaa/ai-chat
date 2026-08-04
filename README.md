@@ -16,8 +16,7 @@ Anthropic Claude APIを利用したAIチャットボットのWebアプリケー�
 
 ```bash
 npm install
-cp .env.example .env   # 未作成の場合は下記の環境変数を直接 .env に記載
-npx prisma generate
+cp .env.example .env
 ```
 
 `.env` に以下を設定する。
@@ -27,10 +26,15 @@ ANTHROPIC_API_KEY=sk-ant-...
 DATABASE_URL="mongodb+srv://user:password@cluster.mongodb.net/ai-chat"
 ```
 
+```bash
+npx prisma generate   # Prisma Clientを生成
+npx prisma db push    # スキーマをMongoDBへ反映(migrate系は非対応のためこちらを使う)
+```
+
 新しいAtlasクラスタを使う場合は、TTLインデックス(`Conversation.updatedAt` 基準、24時間)を1度だけ作成する。
 
 ```bash
-node scripts/create-ttl-index.ts
+node --env-file=.env scripts/create-ttl-index.ts
 ```
 
 ### 起動

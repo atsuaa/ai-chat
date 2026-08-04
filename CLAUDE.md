@@ -25,17 +25,23 @@ Anthropic Claude APIを利用したAIチャットボットのWebアプリケー�
 - Prismaクライアントはバックエンド(Hono側ハンドラ)からのみ利用する。フロントから直接DBへはアクセスしない。
 - ユーザー識別は認証なしのクライアントID(UUID、Cookie保持)で行う。会話・メッセージはこのIDに紐付けて保存する。
 
-## ディレクトリ構成(想定)
+## ディレクトリ構成
 
 ```
 app/
-  api/[[...route]]/route.ts   # Hono APIのエントリポイント
-  (chat UI用のページ・コンポーネント)
+  api/[[...route]]/route.ts   # Hono APIのエントリポイント(hono/vercelのhandle()でマウント)
+  components/                 # ChatApp / Sidebar / MessageList / MessageInput
+  lib/                        # api.ts(fetch+SSEクライアント), types.ts
+  page.tsx, layout.tsx, globals.css
 server/
-  hono/                       # Honoのルーティング定義
-  mastra/                     # Mastra Agent定義
+  db.ts                       # Prisma Clientのシングルトン
+  hono/                       # app.ts(ルーティング), client-id.ts(クライアントIDミドルウェア)
+  mastra/                     # agent.ts(chatAgent定義), index.ts(Mastraインスタンス登録)
 prisma/
   schema.prisma
+scripts/
+  create-ttl-index.ts         # TTLインデックス作成(新環境構築時に1度実行)
+Dockerfile, .dockerignore     # standalone出力を使ったマルチステージビルド
 ```
 
 ## データモデル
@@ -44,7 +50,7 @@ prisma/
 
 **Prisma ORM v7はMongoDBコネクタを含まない(2026年時点)ため、本プロジェクトは意図的にPrisma ORM v6系(6.19系)にピン留めしている。** `npx prisma validate` 等が表示する「v7へアップグレード」の案内には従わないこと。`package.json` の `prisma` / `@prisma/client` を安易に `npm update` や `@latest` で上げないよう注意する。接続先 `DATABASE_URL` は通常通り `schema.prisma` の `datasource` ブロック(`url = env("DATABASE_URL")`)で読み込み、Prisma Clientは `node_modules/@prisma/client` に生成され、コードからは通常通り `@prisma/client` からimportする。MongoDBの後継パスとしてPrisma Next(Early Access)があるが、pre-1.0でトランザクション機能が未成熟なため今回は採用しない。
 
-会話データは**セッション中のみ**保持する。`Conversation.updatedAt` を基準にしたTTLインデックス(24時間)で自動失効させる。TTLインデックスはPrisma schemaでは表現できないため、`scripts/create-ttl-index.ts`(Prisma Clientの `$runCommandRaw` でMongoDBの `createIndexes` を直接実行)で作成する。新しい環境(別のAtlasクラスタなど)を構築した際は `node scripts/create-ttl-index.ts` を再実行すること。
+会話データは**セッション中のみ**保持する。`Conversation.updatedAt` を基準にしたTTLインデックス(24時間)で自動失効させる。TTLインデックスはPrisma schemaでは表現できないため、`scripts/create-ttl-index.ts`(Prisma Clientの `$runCommandRaw` でMongoDBの `createIndexes` を直接実行)で作成する。新しい環境(別のAtlasクラスタなど)を構築した際は `node --env-file=.env scripts/create-ttl-index.ts` を再実行すること(`.env`は自動読み込みされないため `--env-file` が必須)。
 
 ## API(Hono, `/api` 配下)
 
