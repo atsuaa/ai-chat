@@ -68,6 +68,14 @@ prisma/
 - Markdownレンダリングは `react-markdown` + `remark-gfm`(`app/components/MessageList.tsx`)。コードブロックの見た目は `@tailwindcss/typography`(`prose`クラス、`app/globals.css` に `@plugin "@tailwindcss/typography";` を追加)に依存する。シンタックスハイライトは導入していない。
 - 送信中(ストリーミング中)は会話の切り替え・新規作成を抑止する(`isSending` ガード)。エラーメッセージは会話切り替え時にクリアする。
 
+## Docker / デプロイ実装メモ(Phase 6)
+
+- `Dockerfile` は `deps`(`npm ci`)→ `builder`(`prisma generate` + `next build`)→ `runner`(実行専用の軽量イメージ)の3ステージ構成。ベースは `node:24-slim`(Next.js 16は Node >=20.9 が必要)。
+- `next.config.ts` に `output: "standalone"` を設定済み。`.next/standalone` には `.env` が含まれない(ビルド時に `.env` が存在しなくても `next build` は成功することをローカルで確認済み)ため、Dockerビルドコンテキストからは `.dockerignore` で `.env` を除外し、実行時の環境変数はCloud Run側の設定(`--set-env-vars` 等)からのみ注入する。
+- Next.jsのfile tracingは `@prisma/client` が動的に読み込むクエリエンジンのバイナリを検出できないことがあるため、`runner` ステージで `node_modules/.prisma` と `node_modules/@prisma/client` を明示的にコピーしている。`prisma generate` は `builder` ステージ内(Linuxコンテナ内)で実行されるため、コンテナのプラットフォームに合ったバイナリが生成される。
+- Debianベース(`slim`)のイメージにはOpenSSLがプリインストールされていないため、`builder` / `runner` の両方で `apt-get install -y openssl` を実行している(省くとPrismaがOpenSSL検出に失敗する警告を出す)。
+- Cloud Runへの実デプロイ(`gcloud builds submit` でのビルド、`gcloud run deploy`、MongoDB Atlasのネットワークアクセス設定)はこの開発環境に `docker` / `gcloud` CLIが無いため実行できていない。具体的な手順は `README.md` の「Docker化・Cloud Runへのデプロイ」章にまとめてあり、実行はユーザー側で行う。
+
 ## 環境変数
 
 - `ANTHROPIC_API_KEY` — Claude APIキー

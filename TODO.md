@@ -54,12 +54,12 @@
 
 ## Phase 6: Docker化・Cloud Runデプロイ
 
-- [ ] `next.config.ts` に `output: "standalone"` を設定
-- [ ] Dockerfileを作成(standalone出力を使った軽量イメージ)
-- [ ] Cloud Run用の環境変数(`ANTHROPIC_API_KEY`, `DATABASE_URL`, `PORT`)を設定
-- [ ] MongoDB AtlasのネットワークアクセスをCloud Runからの接続用に設定(IPアクセスリスト or Private Endpoint)
-- [ ] Cloud Runへ初回デプロイ
-- [ ] 本番環境での一連の動作確認(送受信・履歴・TTL失効)
+- [x] `next.config.ts` に `output: "standalone"` を設定(ローカルビルドで出力内容を検証済み)
+- [x] Dockerfileを作成(standalone出力を使った軽量イメージ。ローカルに`docker`が無いため実ビルドは未検証)
+- [ ] Cloud Run用の環境変数(`ANTHROPIC_API_KEY`, `DATABASE_URL`, `PORT`)を設定 — 手順を`README.md`に記載。実行はユーザー側
+- [ ] MongoDB AtlasのネットワークアクセスをCloud Runからの接続用に設定(IPアクセスリスト or Private Endpoint) — 手順を`README.md`に記載。実行はユーザー側
+- [ ] Cloud Runへ初回デプロイ — 手順を`README.md`に記載。実行はユーザー側
+- [ ] 本番環境での一連の動作確認(送受信・履歴・TTL失効) — デプロイ後に実施
 
 ## Phase 7: 仕上げ
 
