@@ -136,6 +136,80 @@ DATABASE_URL="mongodb+srv://..." node scripts/create-ttl-index.ts
 
 コードを変更した場合は、手順3(ビルド&push)・手順4(デプロイ)を再実行すればよい。イメージタグを固定(`:latest`)にしている場合、Cloud Runの新しいリビジョンとして自動的に切り替わる。
 
+手動デプロイをまとめたスクリプトとして `scripts/deploy.sh` も用意している(`.env` から `ANTHROPIC_API_KEY` / `DATABASE_URL` を読み込み、ビルド&プッシュ&デプロイを一括実行する)。
+
+```bash
+./scripts/deploy.sh
+```
+
+## GitHub Actionsによる自動デプロイ
+
+`main` ブランチへのpushをトリガーに、GitHub Actions(`.github/workflows/deploy.yml`)が自動的にCloud Runへデプロイする。認証はサービスアカウントキーを使わず、[Workload Identity Federation](https://cloud.google.com/iam/docs/workload-identity-federation)(GitHub Actionsのjob用OIDCトークンをGCPのサービスアカウントに直接紐付ける方式)を使用しており、長期的な秘密鍵をGitHub側に置く必要がない。
+
+### 必要なGitHub Secrets / Variables
+
+| 種別 | 名前 | 内容 |
+|---|---|---|
+| Secret | `ANTHROPIC_API_KEY` | Claude APIキー |
+| Secret | `DATABASE_URL` | MongoDB接続文字列 |
+| Variable | `GCP_PROJECT_ID` | GCPプロジェクトID |
+| Variable | `GCP_WORKLOAD_IDENTITY_PROVIDER` | Workload Identity Providerのフルリソース名 |
+| Variable | `GCP_SERVICE_ACCOUNT` | デプロイに使うサービスアカウントのメールアドレス |
+
+### 新しい環境でセットアップする場合(初回のみ)
+
+1. デプロイ用サービスアカウントを作成し、必要なロール(`roles/run.admin`, `roles/artifactregistry.writer`, `roles/cloudbuild.builds.editor`, `roles/iam.serviceAccountUser`, `roles/storage.admin`)を付与する。
+
+   ```bash
+   gcloud iam service-accounts create github-actions-deployer \
+     --project=YOUR_PROJECT_ID \
+     --display-name="GitHub Actions Deployer"
+
+   for ROLE in roles/run.admin roles/artifactregistry.writer roles/cloudbuild.builds.editor roles/iam.serviceAccountUser roles/storage.admin; do
+     gcloud projects add-iam-policy-binding YOUR_PROJECT_ID \
+       --member="serviceAccount:github-actions-deployer@YOUR_PROJECT_ID.iam.gserviceaccount.com" \
+       --role="$ROLE"
+   done
+   ```
+
+2. Workload Identity PoolとOIDC Providerを作成する(`attribute-condition` で対象リポジトリを限定するのが重要)。
+
+   ```bash
+   gcloud iam workload-identity-pools create github-pool \
+     --project=YOUR_PROJECT_ID --location=global \
+     --display-name="GitHub Actions Pool"
+
+   gcloud iam workload-identity-pools providers create-oidc github-provider \
+     --project=YOUR_PROJECT_ID --location=global \
+     --workload-identity-pool=github-pool \
+     --display-name="GitHub provider" \
+     --attribute-mapping="google.subject=assertion.sub,attribute.repository=assertion.repository" \
+     --attribute-condition="assertion.repository=='OWNER/REPO'" \
+     --issuer-uri="https://token.actions.githubusercontent.com"
+   ```
+
+3. サービスアカウントを、上記リポジトリからのみimpersonateできるようIAMバインディングする。
+
+   ```bash
+   gcloud iam service-accounts add-iam-policy-binding \
+     github-actions-deployer@YOUR_PROJECT_ID.iam.gserviceaccount.com \
+     --project=YOUR_PROJECT_ID \
+     --role="roles/iam.workloadIdentityUser" \
+     --member="principalSet://iam.googleapis.com/projects/YOUR_PROJECT_NUMBER/locations/global/workloadIdentityPools/github-pool/attribute.repository/OWNER/REPO"
+   ```
+
+4. 上記の「必要なGitHub Secrets / Variables」表の値をリポジトリに設定する。
+
+   ```bash
+   gh secret set ANTHROPIC_API_KEY --body "..."
+   gh secret set DATABASE_URL --body "..."
+   gh variable set GCP_PROJECT_ID --body "YOUR_PROJECT_ID"
+   gh variable set GCP_WORKLOAD_IDENTITY_PROVIDER --body "projects/YOUR_PROJECT_NUMBER/locations/global/workloadIdentityPools/github-pool/providers/github-provider"
+   gh variable set GCP_SERVICE_ACCOUNT --body "github-actions-deployer@YOUR_PROJECT_ID.iam.gserviceaccount.com"
+   ```
+
+以降は `main` へpushするだけで自動デプロイされる。実行状況は `gh run list` や GitHubの Actions タブから確認できる。
+
 ## Learn More
 
 - [Next.js Documentation](https://nextjs.org/docs)

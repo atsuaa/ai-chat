@@ -55,13 +55,21 @@
 ## Phase 6: Docker化・Cloud Runデプロイ
 
 - [x] `next.config.ts` に `output: "standalone"` を設定(ローカルビルドで出力内容を検証済み)
-- [x] Dockerfileを作成(standalone出力を使った軽量イメージ。ローカルに`docker`が無いため実ビルドは未検証)
-- [ ] Cloud Run用の環境変数(`ANTHROPIC_API_KEY`, `DATABASE_URL`, `PORT`)を設定 — 手順を`README.md`に記載。実行はユーザー側
-- [ ] MongoDB AtlasのネットワークアクセスをCloud Runからの接続用に設定(IPアクセスリスト or Private Endpoint) — 手順を`README.md`に記載。実行はユーザー側
-- [ ] Cloud Runへ初回デプロイ — 手順を`README.md`に記載。実行はユーザー側
-- [ ] 本番環境での一連の動作確認(送受信・履歴・TTL失効) — デプロイ後に実施
+- [x] Dockerfileを作成(standalone出力を使った軽量イメージ。Cloud Build上でのビルド成功を確認済み)
+- [x] Cloud Run用の環境変数(`ANTHROPIC_API_KEY`, `DATABASE_URL`, `PORT`)を設定(`scripts/deploy.sh`が`.env`から読み込み`--set-env-vars`で注入)
+- [x] MongoDB AtlasのネットワークアクセスをCloud Runからの接続用に設定(`0.0.0.0/0`で許可、動作確認済み)
+- [x] Cloud Runへ初回デプロイ(`scripts/deploy.sh`で実行、Service URL発行・疎通確認済み)
+- [ ] 本番環境での一連の動作確認(送受信・履歴・TTL失効) — トップページの疎通(HTTP 200)のみ確認済み。実際のチャット送受信はブラウザでの確認が必要
 
 ## Phase 7: 仕上げ
 
 - [x] READMEに開発手順(環境構築・起動コマンド)を記載
 - [x] `SPEC.md` / `CLAUDE.md` と実装の差分がないか最終確認・同期
+
+## Phase 8: CI/CD(GitHub Actions)
+
+- [x] GitHubにprivateリポジトリを作成し初回push(`atsuaa/ai-chat`)
+- [x] GCP側にWorkload Identity Federation(サービスアカウントキー不要)を設定し、GitHub Actions用サービスアカウントに必要ロールを付与
+- [x] GitHub Secrets(`ANTHROPIC_API_KEY`, `DATABASE_URL`)・Variables(`GCP_PROJECT_ID`, `GCP_WORKLOAD_IDENTITY_PROVIDER`, `GCP_SERVICE_ACCOUNT`)を登録
+- [x] `.github/workflows/deploy.yml`を作成(`main`へのpushで自動的にCloud Runへビルド&デプロイ)
+- [ ] 実際にワークフローが正常に完走することを確認

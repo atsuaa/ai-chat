@@ -88,7 +88,15 @@ Dockerfile, .dockerignore     # standalone出力を使ったマルチステー�
 - `next.config.ts` に `output: "standalone"` を設定済み。`.next/standalone` には `.env` が含まれない(ビルド時に `.env` が存在しなくても `next build` は成功することをローカルで確認済み)ため、Dockerビルドコンテキストからは `.dockerignore` で `.env` を除外し、実行時の環境変数はCloud Run側の設定(`--set-env-vars` 等)からのみ注入する。
 - Next.jsのfile tracingは `@prisma/client` が動的に読み込むクエリエンジンのバイナリを検出できないことがあるため、`runner` ステージで `node_modules/.prisma` と `node_modules/@prisma/client` を明示的にコピーしている。`prisma generate` は `builder` ステージ内(Linuxコンテナ内)で実行されるため、コンテナのプラットフォームに合ったバイナリが生成される。
 - Debianベース(`slim`)のイメージにはOpenSSLがプリインストールされていないため、`builder` / `runner` の両方で `apt-get install -y openssl` を実行している(省くとPrismaがOpenSSL検出に失敗する警告を出す)。
-- Cloud Runへの実デプロイ(`gcloud builds submit` でのビルド、`gcloud run deploy`、MongoDB Atlasのネットワークアクセス設定)はこの開発環境に `docker` / `gcloud` CLIが無いため実行できていない。具体的な手順は `README.md` の「Docker化・Cloud Runへのデプロイ」章にまとめてあり、実行はユーザー側で行う。
+- Cloud Runへの実デプロイは `gcloud` CLI(`gcloud builds submit` + `gcloud run deploy`)を使って実行済み。手順は `scripts/deploy.sh`(`.env` から `ANTHROPIC_API_KEY` / `DATABASE_URL` を読み込み、値をログに出力せずビルド&デプロイする)としてスクリプト化してある。MongoDB Atlasのネットワークアクセスは `0.0.0.0/0` で許可済み(反映まで数十秒〜数分のラグがあり、直後の接続はTLSエラーで一時的に失敗することがある)。
+
+## CI/CD(GitHub Actions, Phase 8)
+
+- GitHubリポジトリ: `atsuaa/ai-chat`(private)。`main` へのpushで `.github/workflows/deploy.yml` が自動的にCloud Runへデプロイする。
+- GCPへの認証はサービスアカウントキーを使わず、Workload Identity Federation(`github-pool` / `github-provider`、`attribute-condition` で `atsuaa/ai-chat` リポジトリのみに限定)を使用。長期的な秘密鍵をGitHub側に置かない構成。
+- デプロイ用サービスアカウント `github-actions-deployer@ma-ai-chat.iam.gserviceaccount.com` には `roles/run.admin`, `roles/artifactregistry.writer`, `roles/cloudbuild.builds.editor`, `roles/iam.serviceAccountUser`, `roles/storage.admin` を付与済み。
+- ワークフローは `google-github-actions/auth@v3` → `google-github-actions/deploy-cloudrun@v3`(`source: .` でリポジトリのDockerfileから直接Cloud Buildでビルド&デプロイ、`scripts/deploy.sh` と同じ流れ)の2ステップ構成。`ANTHROPIC_API_KEY` / `DATABASE_URL` はGitHub Secrets、`GCP_PROJECT_ID` / `GCP_WORKLOAD_IDENTITY_PROVIDER` / `GCP_SERVICE_ACCOUNT` はGitHub Variables(非秘密情報)として登録済み。
+- 新しい環境(別のGCPプロジェクトやリポジトリのフォーク等)でセットアップし直す場合の手順は `README.md` の「GitHub Actionsによる自動デプロイ」章にコマンド込みで記載している。
 
 ## 環境変数
 
