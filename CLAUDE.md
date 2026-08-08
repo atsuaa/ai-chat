@@ -75,6 +75,7 @@ Dockerfile, .dockerignore     # standalone出力を使ったマルチステー�
 - 送信中(ストリーミング中)は会話の切り替え・新規作成を抑止する(`isSending` ガード)。エラーメッセージは会話切り替え時にクリアする。
 - `Sidebar` はモバイル(`md`未満)ではオフキャンバス表示にしている(`isOpen`/`onClose`をpropsで受け取り、`fixed` + `translate-x`のトランジションで開閉。背後に半透明オーバーレイを表示しクリックで閉じる)。`md`以上では`md:static md:translate-x-0`で常時表示に戻る。
 - `md`未満でのみ表示するヘッダー(`ChatApp.tsx`内、`md:hidden`)にハンバーガーボタンと選択中の会話タイトルを表示する。会話選択・新規作成時はモバイルでサイドバーを自動的に閉じる。タイトルの`truncate`はflexアイテムの既定`min-width: auto`により効かなくなるため、`h1`に`min-w-0 flex-1`を明示的に付与している。
+- **(バグ修正)** 会話未選択の状態で入力欄から直接メッセージを送信すると、`handleSend`内の`setActiveConversationId`が`activeConversationId`監視の`useEffect`(`fetchMessages`呼び出し)を発火させ、そのGETがストリーミング中(ユーザーメッセージ保存後・アシスタントメッセージ保存前)に返ってくると`setMessages(list)`でローカルの楽観的更新(送信直後に追加したユーザー/アシスタントの吹き出し)を丸ごと上書きしてしまい、アシスタントの応答がストリームとしては届いているのに画面に一切表示されない不具合があった。`skipNextMessagesFetchRef`で「自分で作った直後の会話」については次の`fetchMessages`を1回だけスキップすることで修正。サイドバーの「新しい会話」ボタン経由(先に空の会話を作ってから送信)ではこの競合が起きないため、テスト時は両方の導線を確認すること。
 
 ## Docker / デプロイ実装メモ(Phase 6)
 

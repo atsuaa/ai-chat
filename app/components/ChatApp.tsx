@@ -27,6 +27,10 @@ export function ChatApp() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const activeConversationIdRef = useRef<string | null>(null);
+  // handleSendが新規会話を作成した直後は、既にローカルにある楽観的更新
+  // (送信直後に追加したユーザー/アシスタントの吹き出し)をサーバーからの
+  // 空のメッセージ一覧で上書きしてしまわないよう、次のfetchMessagesを1回だけ抑止する
+  const skipNextMessagesFetchRef = useRef(false);
 
   useEffect(() => {
     activeConversationIdRef.current = activeConversationId;
@@ -45,6 +49,11 @@ export function ChatApp() {
 
   useEffect(() => {
     if (!activeConversationId) return;
+
+    if (skipNextMessagesFetchRef.current) {
+      skipNextMessagesFetchRef.current = false;
+      return;
+    }
 
     fetchMessages(activeConversationId)
       .then((list) => {
@@ -96,6 +105,7 @@ export function ChatApp() {
           const conversation = await createConversation();
           conversationId = conversation.id;
           setConversations((prev) => [conversation, ...prev]);
+          skipNextMessagesFetchRef.current = true;
           setActiveConversationId(conversation.id);
         } catch {
           setErrorMessage("会話の作成に失敗しました");
