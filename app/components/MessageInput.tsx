@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type KeyboardEvent } from "react";
+import { useRef, useState, type KeyboardEvent } from "react";
 
 type Props = {
   onSend: (content: string) => void;
@@ -9,6 +9,10 @@ type Props = {
 
 export function MessageInput({ onSend, disabled }: Props) {
   const [value, setValue] = useState("");
+  // 日本語などIMEでの変換確定Enterを送信のEnterと誤認しないためのフラグ。
+  // ブラウザによってはcompositionendより先にkeydownが発火するため、
+  // 予約語のkeyCode 229(IME処理中を示す)も併せて見る。
+  const isComposingRef = useRef(false);
 
   const handleSend = () => {
     const content = value.trim();
@@ -18,10 +22,11 @@ export function MessageInput({ onSend, disabled }: Props) {
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (event.key === "Enter" && !event.shiftKey) {
-      event.preventDefault();
-      handleSend();
-    }
+    if (event.key !== "Enter" || event.shiftKey) return;
+    if (isComposingRef.current || event.keyCode === 229) return;
+
+    event.preventDefault();
+    handleSend();
   };
 
   return (
@@ -31,6 +36,12 @@ export function MessageInput({ onSend, disabled }: Props) {
           value={value}
           onChange={(event) => setValue(event.target.value)}
           onKeyDown={handleKeyDown}
+          onCompositionStart={() => {
+            isComposingRef.current = true;
+          }}
+          onCompositionEnd={() => {
+            isComposingRef.current = false;
+          }}
           disabled={disabled}
           placeholder="メッセージを入力(Shift+Enterで改行)"
           rows={1}

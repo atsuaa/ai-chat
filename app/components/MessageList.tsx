@@ -5,30 +5,33 @@ import remarkGfm from "remark-gfm";
 import type { Components } from "react-markdown";
 import type { Message } from "@/app/lib/types";
 
-const markdownComponents: Components = {
-  pre: ({ children }) => (
-    <pre className="overflow-x-auto rounded-md bg-zinc-100 p-3 text-sm dark:bg-zinc-900">
-      {children}
-    </pre>
-  ),
-  code: ({ className, children, ...props }) => {
-    if (!className) {
+// ユーザー吹き出しは背景がライト/ダークで反転する(bg-zinc-900/dark:bg-zinc-100)ため、
+// コードブロックの配色もそれに合わせて反転させないと文字色と背景色が同化してしまう。
+function getMarkdownComponents(isUser: boolean): Components {
+  const codeClass = isUser
+    ? "bg-white/20 text-inherit dark:bg-black/10"
+    : "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50";
+
+  return {
+    pre: ({ children }) => (
+      <pre className={`overflow-x-auto rounded-md p-3 text-sm ${codeClass}`}>{children}</pre>
+    ),
+    code: ({ className, children, ...props }) => {
+      if (!className) {
+        return (
+          <code className={`rounded px-1 py-0.5 text-sm ${codeClass}`} {...props}>
+            {children}
+          </code>
+        );
+      }
       return (
-        <code
-          className="rounded bg-zinc-100 px-1 py-0.5 text-sm dark:bg-zinc-800"
-          {...props}
-        >
+        <code className={`font-mono ${className}`} {...props}>
           {children}
         </code>
       );
-    }
-    return (
-      <code className={`font-mono ${className}`} {...props}>
-        {children}
-      </code>
-    );
-  },
-};
+    },
+  };
+}
 
 function MessageBubble({ message }: { message: Message }) {
   const isUser = message.role === "user";
@@ -43,8 +46,16 @@ function MessageBubble({ message }: { message: Message }) {
         }`}
       >
         {message.content ? (
-          <div className="prose prose-sm dark:prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
-            <Markdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+          <div
+            className={`prose prose-sm dark:prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 ${
+              // proseプラグインは.prose自体にcolor(var(--tw-prose-body)、グレー系)を
+              // 設定し、p等の子要素はそれを継承する仕組みのため、pを個別に上書きしても
+              // 効果がない。user吹き出しでは.prose自体の色を親のtext-white/
+              // dark:text-zinc-900に追従させることで、pタグを含む地の文を読めるようにする
+              isUser ? "text-inherit" : ""
+            }`}
+          >
+            <Markdown remarkPlugins={[remarkGfm]} components={getMarkdownComponents(isUser)}>
               {message.content}
             </Markdown>
           </div>
