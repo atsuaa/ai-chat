@@ -73,6 +73,8 @@ Dockerfile, .dockerignore     # standalone出力を使ったマルチステー�
 - `app/lib/api.ts` の `sendMessageStream()` はPOSTボディを送る必要があるため `EventSource` は使わず、`fetch` + `ReadableStream` で上記SSE契約(`event:` / `data:` 行)を自前パースしている。
 - Markdownレンダリングは `react-markdown` + `remark-gfm`(`app/components/MessageList.tsx`)。コードブロックの見た目は `@tailwindcss/typography`(`prose`クラス、`app/globals.css` に `@plugin "@tailwindcss/typography";` を追加)に依存する。シンタックスハイライトは導入していない。
 - 送信中(ストリーミング中)は会話の切り替え・新規作成を抑止する(`isSending` ガード)。エラーメッセージは会話切り替え時にクリアする。
+- `Sidebar` はモバイル(`md`未満)ではオフキャンバス表示にしている(`isOpen`/`onClose`をpropsで受け取り、`fixed` + `translate-x`のトランジションで開閉。背後に半透明オーバーレイを表示しクリックで閉じる)。`md`以上では`md:static md:translate-x-0`で常時表示に戻る。
+- `md`未満でのみ表示するヘッダー(`ChatApp.tsx`内、`md:hidden`)にハンバーガーボタンと選択中の会話タイトルを表示する。会話選択・新規作成時はモバイルでサイドバーを自動的に閉じる。タイトルの`truncate`はflexアイテムの既定`min-width: auto`により効かなくなるため、`h1`に`min-w-0 flex-1`を明示的に付与している。
 
 ## Docker / デプロイ実装メモ(Phase 6)
 

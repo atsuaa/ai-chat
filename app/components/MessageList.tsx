@@ -36,7 +36,7 @@ function MessageBubble({ message }: { message: Message }) {
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
       <div
-        className={`max-w-[75%] rounded-2xl px-4 py-2 text-sm leading-relaxed break-words ${
+        className={`max-w-[88%] rounded-2xl px-4 py-2 text-sm leading-relaxed break-words sm:max-w-[75%] ${
           isUser
             ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
             : "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50"
@@ -74,7 +74,7 @@ export function MessageList({ messages }: Props) {
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-4 py-6">
+    <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-3 py-4 sm:px-4 sm:py-6">
       {messages.map((message) => (
         <MessageBubble key={message.id} message={message} />
       ))}

@@ -25,6 +25,7 @@ export function ChatApp() {
   const [isCreatingConversation, setIsCreatingConversation] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const activeConversationIdRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -64,6 +65,7 @@ export function ChatApp() {
       setConversations((prev) => [conversation, ...prev]);
       setMessages([]);
       setActiveConversationId(conversation.id);
+      setIsSidebarOpen(false);
     } catch {
       setErrorMessage("会話の作成に失敗しました");
     } finally {
@@ -73,6 +75,7 @@ export function ChatApp() {
 
   const handleSelect = useCallback(
     (id: string) => {
+      setIsSidebarOpen(false);
       if (isSending || id === activeConversationId) return;
       setMessages([]);
       setErrorMessage(null);
@@ -154,18 +157,43 @@ export function ChatApp() {
     [isSending, activeConversationId],
   );
 
+  const activeTitle =
+    conversations.find((c) => c.id === activeConversationId)?.title || "無題の会話";
+
   return (
-    <div className="flex h-full w-full">
+    <div className="flex h-full w-full overflow-hidden">
       <Sidebar
         conversations={conversations}
         activeConversationId={activeConversationId}
         onSelect={handleSelect}
         onCreate={handleCreate}
         isCreating={isCreatingConversation}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
       />
       <div className="flex min-w-0 flex-1 flex-col">
+        <header className="flex shrink-0 items-center gap-3 border-b border-zinc-200 px-4 py-3 md:hidden dark:border-zinc-800">
+          <button
+            type="button"
+            onClick={() => setIsSidebarOpen(true)}
+            aria-label="メニューを開く"
+            className="shrink-0 rounded-md p-2 text-zinc-600 transition-colors hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          >
+            <svg viewBox="0 0 20 20" fill="none" className="h-5 w-5" aria-hidden="true">
+              <path
+                d="M3 5h14M3 10h14M3 15h14"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
+            </svg>
+          </button>
+          <h1 className="min-w-0 flex-1 truncate text-sm font-medium text-zinc-900 dark:text-zinc-50">
+            {activeConversationId ? activeTitle : "AIチャットボット"}
+          </h1>
+        </header>
         {errorMessage && (
-          <div className="border-b border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
+          <div className="shrink-0 border-b border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
             {errorMessage}
           </div>
         )}

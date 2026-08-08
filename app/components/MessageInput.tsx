@@ -25,7 +25,7 @@ export function MessageInput({ onSend, disabled }: Props) {
   };
 
   return (
-    <div className="border-t border-zinc-200 p-4 dark:border-zinc-800">
+    <div className="shrink-0 border-t border-zinc-200 p-3 sm:p-4 dark:border-zinc-800">
       <div className="mx-auto flex max-w-3xl items-end gap-2">
         <textarea
           value={value}
