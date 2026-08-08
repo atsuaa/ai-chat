@@ -97,6 +97,7 @@ Dockerfile, .dockerignore     # standalone出力を使ったマルチステー�
 - デプロイ用サービスアカウント `github-actions-deployer@ma-ai-chat.iam.gserviceaccount.com` には `roles/run.admin`, `roles/artifactregistry.writer`, `roles/cloudbuild.builds.editor`, `roles/iam.serviceAccountUser`, `roles/storage.admin` を付与済み。
 - ワークフローは `google-github-actions/auth@v3` → `google-github-actions/deploy-cloudrun@v3`(`source: .` でリポジトリのDockerfileから直接Cloud Buildでビルド&デプロイ、`scripts/deploy.sh` と同じ流れ)の2ステップ構成。`ANTHROPIC_API_KEY` / `DATABASE_URL` はGitHub Secrets、`GCP_PROJECT_ID` / `GCP_WORKLOAD_IDENTITY_PROVIDER` / `GCP_SERVICE_ACCOUNT` はGitHub Variables(非秘密情報)として登録済み。
 - 新しい環境(別のGCPプロジェクトやリポジトリのフォーク等)でセットアップし直す場合の手順は `README.md` の「GitHub Actionsによる自動デプロイ」章にコマンド込みで記載している。
+- **(ハマりどころ)** `deploy-cloudrun@v3`の`source: .`(ソースから直接ビルド)は、初回実行時にCloud Run用のデフォルトArtifact Registryリポジトリ`cloud-run-source-deploy`(リージョンごとに固定名)が存在しないと自動作成しようとするが、`roles/artifactregistry.writer`には`repositories.create`権限が含まれないため`PERMISSION_DENIED`で失敗する。サービスアカウントに`artifactregistry.admin`のような強い権限を追加する代わりに、`gcloud artifacts repositories create cloud-run-source-deploy --repository-format=docker --location=<region>`で当該リポジトリを事前に作っておけば、自動作成がスキップされ`writer`権限のみで動作する。
 
 ## 環境変数
 

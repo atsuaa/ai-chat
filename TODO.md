@@ -72,4 +72,4 @@
 - [x] GCP側にWorkload Identity Federation(サービスアカウントキー不要)を設定し、GitHub Actions用サービスアカウントに必要ロールを付与
 - [x] GitHub Secrets(`ANTHROPIC_API_KEY`, `DATABASE_URL`)・Variables(`GCP_PROJECT_ID`, `GCP_WORKLOAD_IDENTITY_PROVIDER`, `GCP_SERVICE_ACCOUNT`)を登録
 - [x] `.github/workflows/deploy.yml`を作成(`main`へのpushで自動的にCloud Runへビルド&デプロイ)
-- [ ] 実際にワークフローが正常に完走することを確認
+- [x] 実際にワークフローが正常に完走することを確認(初回は`artifactregistry.repositories.create`権限不足で失敗、`cloud-run-source-deploy`リポジトリを事前作成して解決)
