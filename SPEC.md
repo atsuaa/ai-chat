@@ -41,9 +41,18 @@ Anthropic Claude APIを利用したAIチャットボットのWebアプリケー�
 - 会話一覧の表示・過去の会話の再開ができる。
 - 保存は**セッション中のみ**とする。一定時間操作がなかった会話は自動的に削除する(MongoDBのTTLインデックスを利用、`updatedAt`基準で失効させる)。
 
-### 4.3 非対象(スコープ外・意図的に未実装)
+### 4.3 画像添付(マルチモーダル入力)
+- チャット入力欄から画像を添付し、Claudeのマルチモーダル機能(画像入力)を使って画像を含むメッセージを送信できる。
+- 対応形式: PNG / JPEG / WebP / GIF(Claude APIが対応する画像形式に準拠)。
+- 上限: 1メッセージあたり最大4枚、1枚あたり最大5MB(元ファイルサイズ)。超過時はクライアント側・サーバー側の両方で送信を拒否する。
+- 保存方法: 画像はBase64エンコードしたData URL文字列としてそのまま`Message.images`(文字列配列)に保存する。外部ストレージ(GCS等)は使わず、テキストと同様に会話データのライフサイクル(セッション中のみ・TTL 24時間で失効)に従う。
+- API: `POST /api/conversations/:id/messages` のリクエストボディに `images?: string[]`(Data URL配列)を追加する。`content` と `images` はどちらか一方があればよい(両方空はエラー)。SSEレスポンスの契約(`event: "message"` / `"done"` / `"error"`)は変更しない。
+- Claudeへの送信: MastraへBase64のData URLをそのまま`CoreMessage`の`image`パート(`{ type: "image", image: dataUrl }`)として渡す。画像はユーザーメッセージにのみ付与し、アシスタントメッセージには付与しない(画像生成は対象外)。
+- 会話タイトルの自動設定は本文(`content`)基準のまま変更しない。画像のみ(本文なし)で送信した場合は「(画像)」を仮タイトルとする。
+
+### 4.4 非対象(スコープ外・意図的に未実装)
 - ユーザー認証・アカウント管理(将来的にも導入しない前提)
-- ファイル/画像アップロード
+- 画像以外のファイルアップロード(PDF・テキストファイル等)
 - 複数AIプロバイダーの切り替え
 - レート制限・不正利用対策(匿名利用だが今回は実装しない)
 
@@ -82,6 +91,7 @@ model Message {
   conversation   Conversation @relation(fields: [conversationId], references: [id])
   role           String       // "user" | "assistant"
   content        String
+  images         String[]     @default([]) // Base64 Data URL文字列の配列(4.3参照、常に[]になり得る)
   createdAt      DateTime     @default(now())
 
   @@index([conversationId])
@@ -95,7 +105,7 @@ model Message {
 | GET | `/api/conversations` | クライアントIDに紐づく会話一覧を取得 |
 | POST | `/api/conversations` | 新規会話を作成 |
 | GET | `/api/conversations/:id/messages` | 会話内のメッセージ一覧を取得 |
-| POST | `/api/conversations/:id/messages` | メッセージを送信し、Claudeの応答をストリーミングで返す(SSE) |
+| POST | `/api/conversations/:id/messages` | メッセージ(本文および/または画像)を送信し、Claudeの応答をストリーミングで返す(SSE)。リクエストボディ: `{ content?: string, images?: string[] }`(4.3参照) |
 
 ## 7. 環境変数
 

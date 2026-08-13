@@ -94,7 +94,7 @@ export function ChatApp() {
   );
 
   const handleSend = useCallback(
-    async (content: string) => {
+    async (content: string, images: string[]) => {
       if (isSending) return;
       setErrorMessage(null);
 
@@ -120,6 +120,7 @@ export function ChatApp() {
         conversationId,
         role: "user",
         content,
+        images,
         createdAt: new Date().toISOString(),
       };
       const assistantMessageId = nextTempId("assistant");
@@ -128,6 +129,7 @@ export function ChatApp() {
         conversationId,
         role: "assistant",
         content: "",
+        images: [],
         createdAt: new Date().toISOString(),
       };
 
@@ -143,7 +145,7 @@ export function ChatApp() {
           });
       };
 
-      await sendMessageStream(conversationId, content, {
+      await sendMessageStream(conversationId, content, images, {
         onChunk: (text) => {
           setMessages((prev) =>
             prev.map((m) =>

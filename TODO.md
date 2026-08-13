@@ -73,3 +73,15 @@
 - [x] GitHub Secrets(`ANTHROPIC_API_KEY`, `DATABASE_URL`)・Variables(`GCP_PROJECT_ID`, `GCP_WORKLOAD_IDENTITY_PROVIDER`, `GCP_SERVICE_ACCOUNT`)を登録
 - [x] `.github/workflows/deploy.yml`を作成(`main`へのpushで自動的にCloud Runへビルド&デプロイ)
 - [x] 実際にワークフローが正常に完走することを確認(初回は`artifactregistry.repositories.create`権限不足で失敗、`cloud-run-source-deploy`リポジトリを事前作成して解決)
+
+## Phase 9: 画像添付(マルチモーダル対応、issue #2)
+
+- [x] `SPEC.md` のスコープ外定義を更新し、画像添付の要件(対応形式・上限・保存方式・API契約)を追記
+- [x] `prisma/schema.prisma` の `Message` に `images String[] @default([])` を追加
+- [x] `app/lib/image.ts` にフロント/バックエンド共通のバリデーション定数・Data URLパース処理を実装
+- [x] `server/hono/app.ts` の `POST /api/conversations/:id/messages` を画像(Data URL配列)対応に変更、Mastraへ渡す`CoreMessage`にマルチモーダルパートを組み立てるよう変更
+- [x] `app/components/MessageInput.tsx` に画像添付ボタン・プレビュー・削除・上限/形式エラー表示を実装
+- [x] `app/components/MessageList.tsx` / `app/lib/types.ts` / `app/lib/api.ts` / `app/components/ChatApp.tsx` を画像対応に更新
+- [ ] `npx prisma db push` の実行(実際のMongoDB Atlas環境への反映、この作業では未実施)
+- [ ] ローカル/本番環境でのブラウザ動作確認(画像添付・送信・Claudeからの応答確認)— この作業を行った環境では `npm ci` がネットワーク制限により実行できず未確認。マージ後に手元で確認が必要
+- [ ] **(運用上の注意)** `images` は非オプショナルな `String[]`(`@default([])`)のため、デプロイ前に本番MongoDB内の既存 `Message` ドキュメントには `images` フィールドが存在しない。TTL(24時間)で自然に入れ替わるのを待つか、デプロイ直前に `db.Message.updateMany({ images: { $exists: false } }, { $set: { images: [] } })` 等で明示的にバックフィルすること
