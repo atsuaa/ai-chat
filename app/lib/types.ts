@@ -11,5 +11,6 @@ export type Message = {
   conversationId: string;
   role: "user" | "assistant";
   content: string;
+  images: string[];
   createdAt: string;
 };

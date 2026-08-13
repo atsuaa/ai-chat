@@ -45,6 +45,20 @@ function MessageBubble({ message }: { message: Message }) {
             : "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50"
         }`}
       >
+        {message.images.length > 0 && (
+          <div className="mb-2 flex flex-wrap gap-2">
+            {message.images.map((image, i) => (
+              <a key={i} href={image} target="_blank" rel="noreferrer">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={image}
+                  alt="添付画像"
+                  className="h-32 w-32 rounded-md border border-zinc-300/50 object-cover dark:border-zinc-700/50"
+                />
+              </a>
+            ))}
+          </div>
+        )}
         {message.content ? (
           <div
             className={`prose prose-sm dark:prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 ${
@@ -59,7 +73,7 @@ function MessageBubble({ message }: { message: Message }) {
               {message.content}
             </Markdown>
           </div>
-        ) : (
+        ) : isUser || message.images.length > 0 ? null : (
           <span className="inline-flex gap-1 py-1" aria-label="応答を生成中">
             <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-current [animation-delay:-0.3s]" />
             <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-current [animation-delay:-0.15s]" />

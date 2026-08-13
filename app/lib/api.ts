@@ -35,6 +35,7 @@ type StreamCallbacks = {
 export async function sendMessageStream(
   conversationId: string,
   content: string,
+  images: string[],
   { onChunk, onDone, onError }: StreamCallbacks,
 ): Promise<void> {
   let res: Response;
@@ -42,7 +43,7 @@ export async function sendMessageStream(
     res = await fetch(`/api/conversations/${conversationId}/messages`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content }),
+      body: JSON.stringify({ content, images }),
     });
   } catch {
     onError("サーバーへの接続に失敗しました");
