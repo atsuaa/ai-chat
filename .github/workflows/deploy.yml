@@ -8,6 +8,8 @@ on:
 env:
   SERVICE: ai-chat
   REGION: asia-northeast1
+  VPC_NETWORK: ai-chat-vpc
+  VPC_SUBNET: ai-chat-subnet
 
 jobs:
   deploy:
@@ -32,7 +34,7 @@ jobs:
           service: ${{ env.SERVICE }}
           region: ${{ env.REGION }}
           source: .
-          flags: '--allow-unauthenticated --port=8080'
+          flags: '--allow-unauthenticated --port=8080 --network=${{ env.VPC_NETWORK }} --subnet=${{ env.VPC_SUBNET }} --vpc-egress=all-traffic'
           env_vars: |-
             ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}
             DATABASE_URL=${{ secrets.DATABASE_URL }}

@@ -88,7 +88,19 @@ Dockerfile, .dockerignore     # standalone出力を使ったマルチステー�
 - `next.config.ts` に `output: "standalone"` を設定済み。`.next/standalone` には `.env` が含まれない(ビルド時に `.env` が存在しなくても `next build` は成功することをローカルで確認済み)ため、Dockerビルドコンテキストからは `.dockerignore` で `.env` を除外し、実行時の環境変数はCloud Run側の設定(`--set-env-vars` 等)からのみ注入する。
 - Next.jsのfile tracingは `@prisma/client` が動的に読み込むクエリエンジンのバイナリを検出できないことがあるため、`runner` ステージで `node_modules/.prisma` と `node_modules/@prisma/client` を明示的にコピーしている。`prisma generate` は `builder` ステージ内(Linuxコンテナ内)で実行されるため、コンテナのプラットフォームに合ったバイナリが生成される。
 - Debianベース(`slim`)のイメージにはOpenSSLがプリインストールされていないため、`builder` / `runner` の両方で `apt-get install -y openssl` を実行している(省くとPrismaがOpenSSL検出に失敗する警告を出す)。
-- Cloud Runへの実デプロイは `gcloud` CLI(`gcloud builds submit` + `gcloud run deploy`)を使って実行済み。手順は `scripts/deploy.sh`(`.env` から `ANTHROPIC_API_KEY` / `DATABASE_URL` を読み込み、値をログに出力せずビルド&デプロイする)としてスクリプト化してある。MongoDB Atlasのネットワークアクセスは `0.0.0.0/0` で許可済み(反映まで数十秒〜数分のラグがあり、直後の接続はTLSエラーで一時的に失敗することがある)。
+- Cloud Runへの実デプロイは `gcloud` CLI(`gcloud builds submit` + `gcloud run deploy`)を使って実行済み。手順は `scripts/deploy.sh`(`.env` から `ANTHROPIC_API_KEY` / `DATABASE_URL` を読み込み、値をログに出力せずビルド&デプロイする)としてスクリプト化してある。
+
+### Cloud Run ⇔ MongoDB Atlas 間のネットワーク構成
+
+- MongoDB AtlasのNetwork Access(IPアクセスリスト)は `0.0.0.0/0` を許可**しない**。Cloud RunからのアウトバウンドをCloud NAT経由の固定IPに集約し、Atlas側はその1つのIPのみを許可する構成にしている。
+- GCP側リソース(プロジェクト `ma-ai-chat`、リージョン `asia-northeast1`):
+  - VPCネットワーク `ai-chat-vpc`(custom-mode) / サブネット `ai-chat-subnet`(`10.10.0.0/24`)
+  - 静的外部IP `ai-chat-nat-ip`(`34.104.189.230`)
+  - Cloud Router `ai-chat-router` + Cloud NAT `ai-chat-nat`(`ai-chat-nat-ip` を使用、`ai-chat-subnet` のプライマリレンジのみが対象)。ポート枯渇で接続がドロップする不具合が出たため `--enable-dynamic-port-allocation --min-ports-per-vm=1024 --max-ports-per-vm=32768` を設定済み(デフォルトの64ポート/VMだと再接続の多いDBクライアントの通信で容易に枯渇し、`No route to host` 等のエラーで断続的に失敗する)。
+  - Cloud Runサービスは `--network=ai-chat-vpc --subnet=ai-chat-subnet --vpc-egress=all-traffic`(Direct VPC egress)でデプロイする。この3フラグは `scripts/deploy.sh` と `.github/workflows/deploy.yml` の両方に反映済み。
+  - GitHub Actionsのデプロイ用サービスアカウント `github-actions-deployer@ma-ai-chat.iam.gserviceaccount.com` には、CloudRunにVPCネットワークをアタッチするため `roles/compute.networkUser` を追加付与済み(これが無いとデプロイ時に権限エラーになる)。
+  - Atlas側のIPアクセスリストには `34.104.189.230/32` のみを登録している。エントリを追加・削除する際は、Atlas UIの「Network Access」で反映を待ってからCloud Run側の疎通(`/api/conversations` へのGET)を確認する運用にすること。
+- **(ハマりどころ・調査メモ)** このドキュメント自体がAtlasのIPアクセスリストの実態と乖離していたことがあった(過去に手動で `0.0.0.0/0` を設定した記録がドキュメントに残っていたが、実際のAtlasプロジェクトでは設定されていなかった)。ネットワーク接続の不具合を調査する際は、このファイルの記述を鵜呑みにせず、Atlas UI(またはAtlas CLI/API)で実際のNetwork Access設定を直接確認すること。ドキュメントと実態が食い違っていたために、本来存在しないCloud NATのMTU問題やGCP内部ルーティングの問題を疑って無駄な調査時間を費やした経緯がある。
 
 ## CI/CD(GitHub Actions, Phase 8)
 
