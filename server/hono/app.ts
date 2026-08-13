@@ -32,10 +32,17 @@ function validateImages(images: string[]): string | null {
 }
 
 // テキスト本文と画像(Data URL文字列)からCoreMessageのcontentパート配列を組み立てる。
+// Mastraのimageパートはmediaタイプの自動判別を行わず、mimeType未指定時はimage/jpeg扱いになるため、
+// Data URLから実際のMIMEタイプを明示的に渡す必要がある。またmimeTypeを指定する場合、imageには
+// "data:...;base64,"プレフィックスを含めない生のbase64文字列を渡す必要がある(プレフィックス込みで
+// 渡すとそのままbase64データとして扱われ、不正な画像データとして送信されてしまう)。
 function toUserContentParts(content: string, images: string[]) {
   return [
     ...(content ? [{ type: "text" as const, text: content }] : []),
-    ...images.map((image) => ({ type: "image" as const, image })),
+    ...images.flatMap((image) => {
+      const parsed = parseImageDataUrl(image);
+      return parsed ? [{ type: "image" as const, image: parsed.base64, mimeType: parsed.mimeType }] : [];
+    }),
   ];
 }
 
