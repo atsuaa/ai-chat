@@ -4,6 +4,12 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - '**.md'
+      - '.gitignore'
+      - 'LICENSE'
+      - '.github/workflows/claude.yml'
+      - '.github/workflows/claude-code-review.yml'
 
 env:
   SERVICE: ai-chat

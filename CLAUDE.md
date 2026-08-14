@@ -104,7 +104,7 @@ Dockerfile, .dockerignore     # standalone出力を使ったマルチステー�
 
 ## CI/CD(GitHub Actions, Phase 8)
 
-- GitHubリポジトリ: `atsuaa/ai-chat`(public)。`main` へのpushで `.github/workflows/deploy.yml` が自動的にCloud Runへデプロイする。
+- GitHubリポジトリ: `atsuaa/ai-chat`(public)。`main` へのpushで `.github/workflows/deploy.yml` が自動的にCloud Runへデプロイする。`paths-ignore`(`**.md` / `.gitignore` / `LICENSE` / `claude.yml` / `claude-code-review.yml`)を設定しており、ドキュメントやClaude Code用ワークフローのみの変更では不要なデプロイが走らないようにしている。`deploy.yml`自体の変更は意図的に除外対象に含めていない(反映確認のため)。
 - リポジトリがpublicのため、`.github/workflows/claude.yml` はissue/コメント本文に `@claude` が含まれていても投稿者(`github.actor`)がリポジトリ所有者(`atsuaa`)本人でない限り起動しないよう制限している。この制限がないと、第三者が作成したissueやコメントでもワークフローが起動しシークレット(`CLAUDE_CODE_OAUTH_TOKEN`)を使った実行が走ってしまう。
 - GCPへの認証はサービスアカウントキーを使わず、Workload Identity Federation(`github-pool` / `github-provider`、`attribute-condition` で `atsuaa/ai-chat` リポジトリのみに限定)を使用。長期的な秘密鍵をGitHub側に置かない構成。
 - デプロイ用サービスアカウント `github-actions-deployer@ma-ai-chat.iam.gserviceaccount.com` には `roles/run.admin`, `roles/artifactregistry.writer`, `roles/cloudbuild.builds.editor`, `roles/iam.serviceAccountUser`, `roles/storage.admin` を付与済み。
